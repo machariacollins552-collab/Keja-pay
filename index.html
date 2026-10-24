@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Nyumba Landlord App</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&display=swap">
+<style>
+/* Layout: a phone-sized app, clean and minimal: white surfaces on a soft neutral ground, one green accent, one sans family, hairline borders. The video flyover plays first (no skip), zooms in, then opens five tabs. */
+:root{
+  --bg:#F6F8F7; --surface:#FFFFFF; --ink:#14201C; --muted:#5B6863; --line:#E1E7E4;
+  --primary:#0F6B58; --on-primary:#FFFFFF; --primary-bg:#E5F1ED;
+  --accent:#0F6B58; --c1:#0F6B58; --c2:#B4C2BC;
+  --hero:#0F6B58; --on-hero:#FFFFFF;
+  --ok:#17704D; --ok-bg:#E1F2E9; --warn:#855600; --warn-bg:#FBF0D4; --bad:#B0342A; --bad-bg:#FBE5E2;
+  --scrim:rgba(12,20,17,.45);
+  --display:'Hanken Grotesk',system-ui,sans-serif; --body:'Hanken Grotesk',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1513; --surface:#151D1A; --ink:#E8EFEC; --muted:#9AA8A3; --line:#26312D;
+  --primary:#4CC3A5; --on-primary:#052019; --primary-bg:#17302A;
+  --accent:#4CC3A5; --c1:#4CC3A5; --c2:#4A5853; --hero:#12594A; --on-hero:#FFFFFF;
+  --ok:#7FD6B0; --ok-bg:#14352A; --warn:#E7C16B; --warn-bg:#352A0E; --bad:#F29A91; --bad-bg:#3A1B18;
+  --scrim:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1513; --surface:#151D1A; --ink:#E8EFEC; --muted:#9AA8A3; --line:#26312D;
+  --primary:#4CC3A5; --on-primary:#052019; --primary-bg:#17302A;
+  --accent:#4CC3A5; --c1:#4CC3A5; --c2:#4A5853; --hero:#12594A; --on-hero:#FFFFFF;
+  --ok:#7FD6B0; --ok-bg:#14352A; --warn:#E7C16B; --warn-bg:#352A0E; --bad:#F29A91; --bad-bg:#3A1B18;
+  --scrim:rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--body);
+  padding-block:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px;border-radius:8px}
+.stage{height:100%;display:flex;justify-content:center;align-items:center;padding-block:12px}
+.phone{position:relative;width:100%;max-width:430px;height:100%;max-height:900px;display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--line);border-radius:28px;overflow:hidden}
+@media (max-width:480px){.stage{padding-block:0}.phone{border:0;border-radius:0;max-height:none}}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 8px}
+.top h1{font:700 24px/1.15 var(--display);margin:0;letter-spacing:-.015em}
+.top small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.tag{font-size:11px;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:99px;white-space:nowrap}
+main{flex:1;min-height:0;overflow-y:auto;padding:10px 18px 20px;display:flex;flex-direction:column;gap:14px}
+main>*{flex-shrink:0}
+h2{font:600 13px/1.2 var(--body);color:var(--muted);margin:8px 0 0}
+
+nav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--surface)}
+nav button{background:none;border:0;padding:9px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);min-height:58px}
+nav button[aria-current="page"]{color:var(--primary)}
+nav button[aria-current="page"] svg{stroke-width:2.2}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.hero{background:var(--hero);color:var(--on-hero);border:0;padding:20px}
+.hero .lbl{font-size:13px;opacity:.85}
+.hero .big{font:700 34px/1.1 var(--display);letter-spacing:-.02em;margin:4px 0 2px;font-variant-numeric:tabular-nums}
+.hero .of{font-size:14px;opacity:.9}
+.bar{height:6px;border-radius:99px;background:rgba(255,255,255,.28);overflow:hidden;margin:16px 0 10px}
+.bar i{display:block;height:100%;background:#fff;border-radius:99px;transition:width .5s}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.paid,.pill.done{color:var(--ok);background:var(--ok-bg)}
+.pill.part,.pill.progress{color:var(--warn);background:var(--warn-bg)}
+.pill.late,.pill.open{color:var(--bad);background:var(--bad-bg)}
+.pill.vacant{color:var(--muted);background:transparent;border:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-weight:600}
+.btn.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn.accent{background:#fff;color:#14201C;border-color:#fff}
+.btn.wide{width:100%}
+.btn.mini{min-height:38px;padding:0 14px;font-size:13px}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.actions .btn{flex-direction:column;gap:4px;padding:10px 4px;min-height:68px;font-size:12.5px}
+.alert{display:flex;gap:12px;align-items:center;text-align:left;width:100%;background:var(--bad-bg);color:var(--bad);border:0;border-radius:16px;padding:13px 15px;font-weight:600}
+.alert span{flex:1;min-width:0}
+.alert b{display:block;font-size:15px}
+.alert em{font-style:normal;font-weight:500;font-size:13px}
+.list{display:flex;flex-direction:column}
+.row{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:11px 0}
+.row:last-child{border-bottom:0}
+.row:first-child{padding-top:0}
+.row .main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;text-align:left}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .t span{font-size:13px;color:var(--muted)}
+.row .r{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-variant-numeric:tabular-nums}
+.unit{flex:0 0 auto;min-width:44px;height:44px;border-radius:12px;background:var(--primary-bg);color:var(--primary);display:grid;place-items:center;font:700 14px var(--display)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.chips button{flex:0 0 auto;min-height:38px;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:13px}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.units{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.u{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;min-height:120px}
+.u .code{font:700 20px var(--display)}
+.u .nm{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u .amt{font-weight:600;font-variant-numeric:tabular-nums;margin-top:auto}
+.u.vac{border-style:dashed;background:transparent}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpis>*{min-width:0}
+.kpi{padding:14px 12px}
+.kpi b{display:block;font:700 clamp(16px,4.7vw,21px)/1.2 var(--display);font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi span{font-size:13px;color:var(--muted)}
+.muted{color:var(--muted)}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted);margin-bottom:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+svg.chart text{fill:var(--muted);font:11px var(--body)}
+svg.chart .now{fill:var(--ink);font-weight:700}
+svg.chart line{stroke:var(--line)}
+
+dialog{border:0;padding:0;background:var(--surface);color:var(--ink);width:min(430px,100%);max-height:88%;margin:auto auto 0;border-radius:24px 24px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.2)}
+dialog::backdrop{background:var(--scrim)}
+.sh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px 6px}
+.sh h3{font:700 20px var(--display);margin:0}
+.x{width:44px;height:44px;border-radius:50%;border:0;background:var(--bg);display:grid;place-items:center}
+.sb{padding:6px 18px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}
+input,select,textarea{min-height:48px;border:1.5px solid var(--muted);border-radius:12px;background:var(--surface);padding:8px 12px;width:100%;font-size:16px;font-weight:400}
+textarea{min-height:96px;font-size:15px}
+.hint{font-size:13px;font-weight:400;color:var(--muted)}
+.err{color:var(--bad);font-size:13px;font-weight:600;min-height:1em}
+dl{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;margin:0;font-size:14px}
+dt{color:var(--muted)}dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.toast{position:absolute;left:50%;bottom:78px;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:12px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:30;max-width:88%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.fly{position:absolute;inset:0;z-index:20;background:#0B1210;color:#fff;transition:opacity .8s ease,filter .8s ease}
+.fly.out{opacity:0;filter:blur(16px);pointer-events:none}
+.fly canvas,.fly video{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fly video{object-fit:cover;transform-origin:50% 60%;background:#0B1210}
+.fly.vid canvas{display:none}
+.fly:not(.vid) video{display:none}
+.fly .scrim{position:absolute;inset:auto 0 0;height:46%;background:linear-gradient(transparent,rgba(6,12,10,.8))}
+.cap{position:absolute;left:24px;right:24px;bottom:64px;opacity:0;transform:translateY(10px);transition:.6s}
+.cap.on{opacity:1;transform:none}
+.cap .k{font:600 13px var(--body);color:rgba(255,255,255,.8)}
+.cap .h{font:700 34px/1.08 var(--display);letter-spacing:-.02em;margin:6px 0 4px;text-wrap:balance}
+.cap .s{font-size:16px;opacity:.9}
+.pin{position:absolute;left:50%;top:13%;transform:translate(-50%,8px);opacity:0;transition:.6s;background:#fff;color:#14201C;border-radius:12px;padding:9px 13px;font-size:13px;white-space:nowrap;text-align:center}
+.pin.on{opacity:1;transform:translate(-50%,0)}
+.pin b{display:block;font:700 15px var(--display)}
+.prog{position:absolute;left:24px;right:24px;bottom:30px;height:2px;background:rgba(255,255,255,.25);border-radius:2px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:#fff}
+.enter{position:absolute;left:24px;right:24px;bottom:26px;z-index:3}
+@media (prefers-reduced-motion:reduce){.bar i,.toast,.cap,.pin{transition:none}.fly{transition:none}}
+</style>
+<style>html{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+</head>
+<body>
+<div class="stage">
+<div class="phone" id="phone">
+  <header class="top">
+    <div><h1 id="ttl">Habari, Collins</h1><small id="sub">Saturday 24 October</small></div>
+    <span class="tag">Sample data</span>
+  </header>
+  <main id="view" tabindex="-1"></main>
+  <nav id="nav" aria-label="Main"></nav>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <section class="fly" id="fly" aria-label="Drone flyover intro">
+    <video id="vid" muted playsinline preload="auto" aria-hidden="true" src="intro-clip.mp4"></video>
+    <canvas id="cv" aria-hidden="true"></canvas>
+    <div class="scrim"></div>
+    <div class="pin" id="pin"><b>Kilimani Court</b>6 units, 5 let (sample)</div>
+    <div class="cap" id="cap"><div class="k" id="capk"></div><div class="h" id="caph"></div><div class="s" id="caps"></div></div>
+    <div class="prog" id="prog"><i></i></div>
+    <button class="btn accent enter" id="enter" type="button" hidden>Open the app</button>
+  </section>
+</div>
+</div>
+
+<dialog id="sheet" aria-labelledby="sheet-title">
+  <div class="sh"><h3 id="sheet-title"></h3><button class="x" type="button" data-act="close" aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sb" id="sheet-body"></div>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+/* ---------------- sample data ---------------- */
+var TODAY=new Date('2026-10-24T12:00:00');
+var PROPS={kc:'Kilimani Court',nh:'Ngong Rd Heights'};
+var tenants=[
+ {id:'A1',p:'kc',name:'Wanjiru Kamau',phone:'0700 000 101',rent:28000,paid:28000,arr:0,lease:'2027-03-31'},
+ {id:'A2',p:'kc',name:'Brian Otieno',phone:'0700 000 102',rent:28000,paid:28000,arr:0,lease:'2026-12-31'},
+ {id:'A3',p:'kc',name:'Amina Hassan',phone:'0700 000 103',rent:32000,paid:20000,arr:0,lease:'2027-06-30'},
+ {id:'A4',p:'kc',name:'',phone:'',rent:30000,paid:0,arr:0,lease:''},
+ {id:'B1',p:'kc',name:'Peter Mwangi',phone:'0700 000 104',rent:35000,paid:0,arr:35000,lease:'2026-11-30'},
+ {id:'B2',p:'kc',name:'Grace Njeri',phone:'0700 000 105',rent:35000,paid:35000,arr:0,lease:'2027-08-31'},
+ {id:'1A',p:'nh',name:'Daniel Kiprop',phone:'0700 000 106',rent:22000,paid:22000,arr:0,lease:'2027-01-31'},
+ {id:'1B',p:'nh',name:'Esther Wafula',phone:'0700 000 107',rent:22000,paid:0,arr:0,lease:'2027-02-28'},
+ {id:'2A',p:'nh',name:'Samuel Ochieng',phone:'0700 000 108',rent:26000,paid:26000,arr:0,lease:'2027-05-31'},
+ {id:'2B',p:'nh',name:'Lucy Akinyi',phone:'0700 000 109',rent:26000,paid:10000,arr:0,lease:'2026-12-15'}
+];
+tenants.forEach(function(t){t.rec=t.paid});
+var payLog=[
+ {code:'SJK4M2P9QA',unit:'A1',amt:28000,day:'Oct 2'},
+ {code:'SJL8R1T6XB',unit:'2A',amt:26000,day:'Oct 3'},
+ {code:'SJM2C7V4ZD',unit:'B2',amt:35000,day:'Oct 4'},
+ {code:'SJN6H3K8WE',unit:'1A',amt:22000,day:'Oct 5'},
+ {code:'SJP9D5L2YF',unit:'A3',amt:20000,day:'Oct 8'}
+];
+var fixes=[
+ {id:1,unit:'B1',issue:'Kitchen tap leaking',cost:2500,st:'open'},
+ {id:2,unit:'A3',issue:'Gate intercom not working',cost:6000,st:'progress'},
+ {id:3,unit:'1B',issue:'Water heater tripping',cost:4500,st:'open'},
+ {id:4,unit:'A2',issue:'Door lock replaced',cost:4200,st:'done'}
+];
+var exps=[
+ {cat:'Caretaker',amt:12000,note:'Both blocks'},
+ {cat:'Water and power (common)',amt:6500,note:''},
+ {cat:'Repairs',amt:4200,note:'A2 door lock'},
+ {cat:'Cleaning',amt:3000,note:''},
+ {cat:'Land rates',amt:3300,note:'Quarterly share'}
+];
+var hist={m:['May','Jun','Jul','Aug','Sep'],inc:[236,241,244,238,249],exp:[41,38,52,36,47]};
+var S={tab:'home',filter:'all'};
+
+/* ---------------- helpers ---------------- */
+var $=function(id){return document.getElementById(id)};
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function kes(n){return 'KES '+Math.round(n).toLocaleString('en-KE')}
+function bal(t){return t.rent-t.paid+t.arr}
+function st(t){if(!t.name)return 'vacant';if(bal(t)<=0)return 'paid';if(t.paid>0)return 'part';return 'late'}
+var LBL={paid:'Paid',part:'Part-paid',late:'Late',vacant:'Vacant',open:'Open',progress:'In progress',done:'Done'};
+function pill(k){return '<span class="pill '+k+'">'+LBL[k]+'</span>'}
+function days(s){return Math.round((new Date(s+'T12:00:00')-TODAY)/864e5)}
+function occ(){return tenants.filter(function(t){return t.name})}
+function get(id){return tenants.filter(function(t){return t.id===id})[0]}
+function tot(){var o=occ();return{exp:o.reduce(function(a,t){return a+t.rent},0),got:o.reduce(function(a,t){return a+t.rec},0),owed:o.reduce(function(a,t){return a+Math.max(0,bal(t))},0)}}
+function spent(){return exps.reduce(function(a,e){return a+e.amt},0)}
+var IC={
+ home:'<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',
+ units:'<path d="M4 21V4h10v17M14 9h6v12M8 8h2M8 12h2M8 16h2"/>',
+ rent:'<path d="M3 7h16a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7zM3 7l12-3v3M17 14h2"/>',
+ fix:'<path d="M14 7a4 4 0 105 5l-9 9a2 2 0 01-3-3l9-9"/>',
+ rep:'<path d="M4 20h16M7 20v-7M12 20V6M17 20v-10"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ play:'<path d="M7 4l13 8-13 8z"/>'
+};
+function ic(k,s){s=s||22;return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[k]+'</svg>'}
+var toastT;
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on')},2600)}
+
+/* ---------------- screens ---------------- */
+var TABS=[['home','Home','home'],['units','Units','units'],['rent','Rent','rent'],['fix','Repairs','fix'],['rep','Reports','rep']];
+function renderNav(){
+  $('nav').innerHTML=TABS.map(function(t){return '<button type="button" data-act="tab" data-v="'+t[0]+'"'+(S.tab===t[0]?' aria-current="page"':'')+'>'+ic(t[2])+t[1]+'</button>'}).join('');
+}
+function unitOpts(extra){
+  return occ().map(function(t){return '<option value="'+t.id+'">'+t.id+' · '+esc(t.name)+'</option>'}).join('')+(extra?'<option value="Common">Common area</option>':'');
+}
+function vHome(){
+  var T=tot(),pct=T.exp?Math.min(100,Math.round(T.got/T.exp*100)):0;
+  var late=occ().filter(function(t){return st(t)==='late'}).length,part=occ().filter(function(t){return st(t)==='part'}).length;
+  var soon=occ().filter(function(t){var d=days(t.lease);return d<=75}).sort(function(a,b){return days(a.lease)-days(b.lease)});
+  var openFix=fixes.filter(function(f){return f.st!=='done'}).length;
+  var h='<div class="card hero"><div class="lbl">Received in October</div><div class="big">'+kes(T.got)+'</div><div class="of">of '+kes(T.exp)+' rent due</div>'+
+    '<div class="bar" role="img" aria-label="'+pct+' percent collected"><i style="width:'+pct+'%"></i></div><div class="of">'+pct+'% of rent due received · 7 days to month end</div></div>';
+  if(late||part)h+='<button class="alert" type="button" data-act="goLate"><span><b>'+late+' late, '+part+' part-paid</b><em>'+kes(T.owed)+' still to collect</em></span>'+ic('rent')+'</button>';
+  h+='<div class="actions"><button class="btn" type="button" data-act="pay">'+ic('rent')+'Record rent</button><button class="btn" type="button" data-act="newFix">'+ic('fix')+'New repair</button><button class="btn" type="button" data-act="newExp">'+ic('rep')+'Add expense</button></div>';
+  h+='<h2>Leases ending soon</h2><div class="card"><div class="list">'+(soon.length?soon.map(function(t){var d=days(t.lease);return '<div class="row"><button class="main" type="button" data-act="unit" data-v="'+t.id+'"><span class="unit">'+t.id+'</span><span class="t"><b>'+esc(t.name)+'</b><span>Ends '+t.lease+'</span></span></button><span class="pill '+(d<45?'late':'part')+'">'+d+' days</span></div>'}).join(''):'<span class="muted">No leases end in the next 75 days.</span>')+'</div></div>';
+  h+='<div class="kpis"><div class="card kpi"><b>'+openFix+'</b><span>Open repairs</span></div><div class="card kpi"><b>'+occ().length+' of '+tenants.length+'</b><span>Units let</span></div></div>';
+  h+='<button class="btn wide" type="button" data-act="replay">'+ic('play',18)+'Replay the drone flyover</button>';
+  return h;
+}
+function vUnits(){
+  var h='';
+  Object.keys(PROPS).forEach(function(p){
+    var us=tenants.filter(function(t){return t.p===p});
+    h+='<h2>'+PROPS[p]+'</h2><div class="units">'+us.map(function(t){
+      if(!t.name)return '<button class="u vac" type="button" data-act="unit" data-v="'+t.id+'"><span class="code">'+t.id+'</span>'+pill('vacant')+'<span class="amt muted">Asking '+kes(t.rent)+'</span></button>';
+      return '<button class="u" type="button" data-act="unit" data-v="'+t.id+'"><span class="code">'+t.id+'</span><span class="nm">'+esc(t.name)+'</span>'+pill(st(t))+'<span class="amt">'+kes(t.rent)+'</span
